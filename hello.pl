@@ -17,14 +17,32 @@ open(FILE, $filename) or die "Cannot open file $filename\n";
 
 my $count = 0;
 my $countLinesStartFromDigit = 0;
+my $countAnatherLines = 0;
+
+my $stackTrace = "";
+my $prevLineBolongStackTrace = 0;   # в перле нет булевого литерала, но 0, '0', '', пустой список - вычислятся в false
+                                    # все остальное - в true
+
 while( my $line = <FILE> ) {
-    if ($line =~ /^\d/) {
-        $countLinesStartFromDigit++;
-    }
     $count++;
+    if ($line =~ /^[\d<]/) {
+        if ($prevLineBolongStackTrace) {
+            print $stackTrace;
+            $stackTrace = "";
+            $prevLineBolongStackTrace = 0;
+        }
+        $countLinesStartFromDigit++;
+        next;#переход к следующей итерации цикла
+    }
+    #заводим переменную куда будем складывать строки СтекТрейса
+    $stackTrace = $stackTrace . $line;#конкатенация строк, operator dot (.)
+    $prevLineBolongStackTrace = 1;
+
+    $countAnatherLines++;
 }
 print "count lines: $count\n";
 print "count lines start from digit: $countLinesStartFromDigit\n";
+print "count another lines: $countAnatherLines\n";
 
 
 #------------------------
