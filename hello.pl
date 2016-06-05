@@ -11,8 +11,6 @@ if (not defined $filename) {
     die "Need filename in first arg\n";
 }
 
-print "filename: $filename\n";
-
 open(FILE, $filename) or die "Cannot open file $filename\n";
 
 my $count = 0;
@@ -20,23 +18,30 @@ my $countLinesStartFromDigit = 0;
 my $countAnatherLines = 0;
 
 my $stackTrace = "";
-my $prevLineBolongStackTrace = 0;   # в перле нет булевого литерала, но 0, '0', '', пустой список - вычислятся в false
+my $prevLineBelongStackTrace = 0;   # в перле нет булевого литерала, но 0, '0', '', пустой список - вычислятся в false
                                     # все остальное - в true
+
+my @allStackTraces;
 
 while( my $line = <FILE> ) {
     $count++;
-    if ($line =~ /^[\d<]/) {
-        if ($prevLineBolongStackTrace) {
-            print $stackTrace;
+    if ($line =~ /^[\d<]/) { # если строчка начинается с цифры или символа '<' то это не строчка стектрейса
+        if ($prevLineBelongStackTrace) {
+            #todo сначала надо посмотреть в массив, нет ли там уже такого стектрейса
+            #если нет, то положить в конец этот стектрейс, если есть
+            #то туда, где лежат номера, добавить count
+            push(@allStackTraces, $stackTrace);
+
+
             $stackTrace = "";
-            $prevLineBolongStackTrace = 0;
+            $prevLineBelongStackTrace = 0;
         }
         $countLinesStartFromDigit++;
         next;#переход к следующей итерации цикла
     }
     #заводим переменную куда будем складывать строки СтекТрейса
     $stackTrace = $stackTrace . $line;#конкатенация строк, operator dot (.)
-    $prevLineBolongStackTrace = 1;
+    $prevLineBelongStackTrace = 1;
 
     $countAnatherLines++;
 }
