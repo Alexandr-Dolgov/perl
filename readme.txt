@@ -14,4 +14,4 @@ $ sudo perl -MCPAN -e shell
 установить модуль (для отладки в IDEA) через CPAN
 $ sudo cpan
 > install "Devel::Camelcadedb"
-> quit`
+> quit
