@@ -14,51 +14,51 @@ if (not defined $filename) {
 open(FILE, $filename) or die "Cannot open file $filename\n";
 
 my $count = 0;
-my $countLinesStartFromDigit = 0;
-my $countAnatherLines = 0;
-
 my $stackTrace = "";
 my $prevLineBelongStackTrace = 0;   # в перле нет булевого литерала, но 0, '0', '', пустой список - вычислятся в false
                                     # все остальное - в true
 
 my @allStackTraces;
+my @allStackTracesLineFrom;
+my @allStackTracesLineTo;
+my $countStackTraceLines = 0;
 
 while( my $line = <FILE> ) {
     $count++;
     if ($line =~ /^[\d<]/) { # если строчка начинается с цифры или символа '<' то это не строчка стектрейса
         if ($prevLineBelongStackTrace) {
-            #todo сначала надо посмотреть в массив, нет ли там уже такого стектрейса
-            #если нет, то положить в конец этот стектрейс, если есть
-            #то туда, где лежат номера, добавить count
             push(@allStackTraces, $stackTrace);
-
+            push(@allStackTracesLineFrom, $count - $countStackTraceLines);
+            push(@allStackTracesLineTo, $count - 1);
+            $countStackTraceLines = 0;
 
             $stackTrace = "";
             $prevLineBelongStackTrace = 0;
         }
-        $countLinesStartFromDigit++;
         next;#переход к следующей итерации цикла
     }
     #заводим переменную куда будем складывать строки СтекТрейса
     $stackTrace = $stackTrace . $line;#конкатенация строк, operator dot (.)
+    $countStackTraceLines++;
     $prevLineBelongStackTrace = 1;
-
-    $countAnatherLines++;
 }
-print "count lines: $count\n";
-print "count lines start from digit: $countLinesStartFromDigit\n";
-print "count another lines: $countAnatherLines\n";
 
+#вывести все стектрейсы
+#for (my $i=0; $i < scalar @allStackTraces; $i++) {
+#    print "#$i from $allStackTracesLineFrom[$i] to $allStackTracesLineTo[$i]\n";
+#    print "$allStackTraces[$i]\n";
+#}
 
-#------------------------
-#читаем файл построчно,
-# если эта строка не начинается с '\tat ' и не начинается с цифры (что говорит что это не Stack Trace, a просто log)
-# тогда значит что эта строчка это начало нового Stack Trace
-# и все следующие строчки начинающиеся с '\tat ' это часть этого Stack Trace
-#
-# Нам нужно прочитать целиком один Stack Trace и занести его в память
-#
-# каждому СтекТрейсу мы должны поставить в соответствие массив чисел - номера строк в исходном файле где этот СтекТрейс был встречен
-# сам по себе СтекТрейс это должен быть массив строк
-
-# на груви подошла бы такая структура: список мап, где каждая мапа: [stackTrace: списокСтрокЭтогоСтекстрейса, lines: списокЧиселСНомерамиСтокГдеЭтотСтекТрейсБылНайден]
+#вывести уникальные стектрейсы с номерами строк, где они были встречены
+for (my $i=0; $i < ((scalar @allStackTraces) - 1); $i++) {
+    print "#$i from $allStackTracesLineFrom[$i] to $allStackTracesLineTo[$i]";
+    for (my $j=$i+1; $j < scalar @allStackTraces; $j++) {
+        if ($allStackTraces[$i] eq $allStackTraces[$j]) {
+            splice @allStackTraces, $j, 1;
+            my $from =  splice @allStackTracesLineFrom, $j, 1;
+            my $to =  splice @allStackTracesLineTo, $j, 1;
+            print ", from $from to $to";
+        }
+    }
+    print "\n$allStackTraces[$i]\n";
+}
